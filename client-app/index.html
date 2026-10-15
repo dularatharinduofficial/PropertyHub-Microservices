@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PropertyHub - Real Estate</title>
+    <!-- CSS STYLES: Makes the website look beautiful and responsive -->
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; }
+        .navbar { background: #2c3e50; padding: 15px 30px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; }
+        .box { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 400px; margin: auto; }
+        h2 { color: #2c3e50; text-align: center; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        input[type="file"] { background: #f8f9fa; padding: 15px; text-align: center; margin-bottom: 5px; }
+        .btn { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #2980b9; }
+        .link { display: block; text-align: center; margin-top: 15px; color: #3498db; cursor: pointer; }
+        
+        /* Hide dashboard and register views when the page first loads */
+        #dashboard, #register-view { display: none; }
+        
+        .add-form { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* Property Card Styles */
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-body { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 19px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .card-price { color: #27ae60; font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+        .card-loc { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; }
+        .card-desc { color: #555; font-size: 14px; margin-bottom: 15px; flex-grow: 1; background: #f8f9fa; padding: 10px; border-radius: 5px; }
+        .owner-info { background: #e8f4f8; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; border-left: 4px solid #3498db; }
+        .owner-info strong { color: #2c3e50; }
+        .owner-info .contact { color: #e67e22; font-weight: bold; margin-top: 5px; display: block; }
+        
+        .btn-delete { background: #e74c3c; width: 48%; padding: 10px; margin-top: auto; display: inline-block; }
+        .btn-edit { background: #f39c12; width: 48%; padding: 10px; margin-top: auto; display: inline-block; }
+        #cancel-edit-btn { background: #7f8c8d; display: none; margin-top: 10px; }
+        #cancel-edit-btn:hover { background: #95a5a6; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-view" class="container">
+        <div class="box">
+            <h2>🏠 PropertyHub Login</h2>
+            <input type="text" id="log-user" placeholder="Username">
+            <input type="password" id="log-pass" placeholder="Password">
+            <button class="btn" onclick="login()">Login</button>
+            <p id="log-msg" style="color: red; text-align: center;"></p>
+            <span class="link" onclick="switchView('register-view')">New user? Register here</span>
+        </div>
+    </div>
+
+    <!-- 2. REGISTER SCREEN -->
+    <div id="register-view" class="container">
+        <div class="box">
+            <h2>🏠 Register Account</h2>
+            <input type="text" id="reg-user" placeholder="New Username">
+            <input type="email" id="reg-email" placeholder="Email Address">
+            <input type="password" id="reg-pass" placeholder="Password">
+            <button class="btn" style="background:#27ae60;" onclick="register()">Register</button>
+            <p id="reg-msg" style="text-align: center; font-weight:bold;"></p>
+            <span class="link" onclick="switchView('login-view')">Back to Login</span>
+        </div>
+    </div>
+
+    <!-- 3. MAIN DASHBOARD (Shows only after login) -->
+    <div id="dashboard">
+        <div class="navbar">
+            <h2>🏠 PropertyHub</h2>
+            <div>Logged in as: <strong id="user-display"></strong> 
+                <button class="btn btn-delete" style="width:auto; margin:0 0 0 15px; padding: 8px 15px;" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Form to Add or Edit Properties -->
+            <div class="add-form" id="property-form-container">
+                <h3 id="form-title">Post a New Property</h3>
+                
+                <!-- Hidden input to store Property ID when editing -->
+                <input type="hidden" id="edit-prop-id">
+                
+                <input type="text" id="prop-title" placeholder="Title (e.g. Luxury Villa in Malabe)">
+                <input type="text" id="prop-loc" placeholder="Location">
+                <input type="text" id="prop-price" placeholder="Price (e.g. Rs. 45,000,000)">
+                <textarea id="prop-desc" rows="3" placeholder="Property Details (e.g. 3 Bedrooms, 2 Bathrooms...)"></textarea>
+                <input type="text" id="prop-contact" placeholder="Contact Number (e.g. 077 123 4567)">
+                
+                <div id="image-upload-section">
+                    <label id="img-hint" style="display:block; color:#7f8c8d; font-size:14px; margin-bottom:5px;"></label>
+                    <input type="file" id="prop-img-file" accept="image/png, image/jpeg">
+                </div>
+
+                <!-- Main Submit Button -->
+                <button class="btn" id="save-prop-btn" style="background: #27ae60; margin-top: 10px;" onclick="handlePropertySubmit()">Save Property</button>
+                <button class="btn" id="cancel-edit-btn" onclick="cancelEdit()">Cancel Edit</button>
+                <p id="upload-status" style="color: #2980b9; font-weight: bold; text-align: center;"></p>
+            </div>
+
+            <!-- List of all properties will appear here -->
+            <h3>All Available Properties</h3>
+            <div id="properties-list" class="property-grid"></div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT: Logic and API Calls -->
+    <script>
+        // Global Settings
+        const GATEWAY_URL = "http://localhost:8080"; // The Backend URL
+        const API_KEY = "soc-secret-api-key-12345";  // Security Key
+        let authToken = "";  // Stores the JWT Token after login
+        let currentUser = ""; // Stores the name of the logged-in user
+        
+        // Flag to check if the user is Adding or Editing a property
+        let isEditing = false; 
+
+        // Function to switch between Login, Register, and Dashboard screens
+        function switchView(viewId) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('register-view').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block'; // Show the selected view
+        }
+
+        // --- REGISTER USER ---
+        async function register() {
+            const user = { 
+                username: document.getElementById('reg-user').value, 
+                email: document.getElementById('reg-email').value, 
+                password: document.getElementById('reg-pass').value 
+            };
+            
+            const res = await fetch(`${GATEWAY_URL}/auth/register`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY }, 
+                body: JSON.stringify(user) 
+            });
+            
+            if (res.ok) {
+                document.getElementById('reg-msg').style.color = "green"; 
+                document.getElementById('reg-msg').innerText = "Registered! Redirecting...";
+                setTimeout(() => switchView('login-view'), 1500);
+            } else { 
+                document.getElementById('reg-msg').style.color = "red"; 
+                document.getElementById('reg-msg').innerText = "Error!"; 
+            }
+        }
+
+        // --- LOGIN USER ---
+        async function login() {
+            const credentials = { 
+                username: document.getElementById('log-user').value, 
+                password: document.getElementById('log-pass').value 
+            };
+            
+            const res = await fetch(`${GATEWAY_URL}/auth/login`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY }, 
+                body: JSON.stringify(credentials) 
+            });
+            
+            const data = await res.json();
+            
+            // If token exists, login is successful
+            if (data.access_token) {
+                authToken = data.access_token; // Save Token
+                currentUser = data.username;   // Save Username
+                
+                document.getElementById('user-display').innerText = currentUser;
+                switchView('dashboard');
+                loadProperties(); // Get properties from database
+            } else { 
+                document.getElementById('log-msg').innerText = "Invalid Credentials!"; 
+            }
+        }
+
+        // --- SMART SUBMIT BUTTON ---
+        // Decides whether to Add or Update based on the 'isEditing' flag
+        async function handlePropertySubmit() {
+            if (isEditing) { 
+                await updateProperty(); 
+            } else { 
+                await addProperty(); 
+            }
+        }
+
+        // --- ADD NEW PROPERTY ---
+        async function addProperty() {
+            const fileInput = document.getElementById('prop-img-file');
+            if (fileInput.files.length === 0) { alert("Please select an image!"); return; }
+            
+            document.getElementById('upload-status').innerText = "Uploading & Saving...";
+
+            // Read the image file and convert it to Base64 (Text Format)
+            const reader = new FileReader();
+            reader.onloadend = async function() {
+                const property = {
+                    title: document.getElementById('prop-title').value,
+                    location: document.getElementById('prop-loc').value,
+                    price: document.getElementById('prop-price').value,
+                    description: document.getElementById('prop-desc').value,
+                    contactNumber: document.getElementById('prop-contact').value,
+                    imageUrl: reader.result, // Base64 Image
+                    owner: currentUser       // Identify who created this
+                };
+                
+                // Send data to backend
+                await fetch(`${GATEWAY_URL}/auth/properties`, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY, 'Authorization': `Bearer ${authToken}` },
+                    body: JSON.stringify(property)
+                });
+                
+                document.getElementById('upload-status').innerText = "Added Successfully!";
+                setTimeout(() => document.getElementById('upload-status').innerText = "", 2000);
+                
+                clearForm();
+                loadProperties(); // Refresh UI
+            };
+            reader.readAsDataURL(fileInput.files[0]); // Start reading image
+        }
+
+        // --- UPDATE EXISTING PROPERTY ---
+        async function updateProperty() {
+            const id = document.getElementById('edit-prop-id').value;
+            const fileInput = document.getElementById('prop-img-file');
+            document.getElementById('upload-status').innerText = "Updating...";
+
+            const updatedProperty = {
+                title: document.getElementById('prop-title').value,
+                location: document.getElementById('prop-loc').value,
+                price: document.getElementById('prop-price').value,
+                description: document.getElementById('prop-desc').value,
+                contactNumber: document.getElementById('prop-contact').value
+            };
+
+            // If a new image is selected, convert it and send
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onloadend = async function() {
+                    updatedProperty.imageUrl = reader.result; // Attach new image
+                    await sendUpdateRequest(id, updatedProperty);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                // If no new image, send only text updates
+                await sendUpdateRequest(id, updatedProperty);
+            }
+        }
+
+        // Helper function to send the actual PUT request for updating
+        async function sendUpdateRequest(id, data) {
+            await fetch(`${GATEWAY_URL}/auth/properties/${id}`, {
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY, 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify(data)
+            });
+
+            document.getElementById('upload-status').innerText = "Updated Successfully!";
+            setTimeout(() => document.getElementById('upload-status').innerText = "", 2000);
+            
+            cancelEdit();     // Return UI to normal Add mode
+            loadProperties(); // Refresh UI
+        }
+
+        // --- LOAD AND SHOW PROPERTIES ---
+        async function loadProperties() {
+            const res = await fetch(`${GATEWAY_URL}/auth/properties`, { 
+                headers: { 'X-API-KEY': API_KEY, 'Authorization': `Bearer ${authToken}` } 
+            });
+            const data = await res.json();
+            let html = "";
+            
+            data.forEach(p => {
+                let controls = "";
+                
+                // Show Edit/Delete buttons ONLY if the logged-in user is the owner
+                if(p.owner === currentUser) {
+                    // Remove quotes and newlines to prevent HTML breaking
+                    const safeTitle = p.title ? p.title.replace(/'/g, "\\'").replace(/\n/g, " ") : '';
+                    const safeLoc = p.location ? p.location.replace(/'/g, "\\'").replace(/\n/g, " ") : '';
+                    const safePrice = p.price ? p.price.replace(/'/g, "\\'").replace(/\n/g, " ") : '';
+                    const safeDesc = p.description ? p.description.replace(/'/g, "\\'").replace(/\n/g, " ") : '';
+                    const safeContact = p.contactNumber ? p.contactNumber.replace(/'/g, "\\'").replace(/\n/g, " ") : '';
+
+                    controls = `
+                        <div style="margin-top: auto;">
+                            <button class="btn btn-edit" onclick="startEdit('${p.id}', '${safeTitle}', '${safeLoc}', '${safePrice}', '${safeDesc}', '${safeContact}')">Edit</button>
+                            <button class="btn btn-delete" onclick="deleteProperty('${p.id}')">Delete</button>
+                        </div>
+                    `;
+                }
+
+                // Build the Property Card HTML
+                html += `
+                <div class="card">
+                    <img src="${p.imageUrl}" alt="Property Image">
+                    <div class="card-body">
+                        <div class="card-price">${p.price}</div>
+                        <div class="card-title">${p.title}</div>
+                        <div class="card-loc">📍 ${p.location}</div>
+                        <div class="card-desc">${p.description || 'No description provided.'}</div>
+                        <div class="owner-info">
+                            <div>👤 Added by: <strong>${p.owner || 'Unknown'}</strong></div>
+                            <div class="contact">📞 ${p.contactNumber || 'No Contact Info'}</div>
+                        </div>
+                        ${controls}
+                    </div>
+                </div>`;
+            });
+            
+            // Display cards on the screen
+            document.getElementById('properties-list').innerHTML = html;
+        }
+
+        // --- PREPARE FORM FOR EDITING ---
+        function startEdit(id, title, loc, price, desc, contact) {
+            isEditing = true; // Set flag to true
+            
+            // Smoothly scroll to the top of the page
+            document.getElementById('property-form-container').scrollIntoView({ behavior: 'smooth' });
+
+            // Fill the form with existing details
+            document.getElementById('edit-prop-id').value = id;
+            document.getElementById('prop-title').value = title;
+            document.getElementById('prop-loc').value = loc;
+            document.getElementById('prop-price').value = price;
+            document.getElementById('prop-desc').value = desc;
+            document.getElementById('prop-contact').value = contact;
+
+            // Change UI texts and colors to "Edit Mode"
+            document.getElementById('form-title').innerText = "Edit Property Details";
+            document.getElementById('save-prop-btn').innerText = "Update Property";
+            document.getElementById('save-prop-btn').style.background = "#f39c12"; // Orange button
+            document.getElementById('img-hint').innerText = "Select a new image (Leave empty to keep current image):";
+            document.getElementById('cancel-edit-btn').style.display = "block";
+        }
+
+        // --- CANCEL EDITING (Go back to Add mode) ---
+        function cancelEdit() {
+            isEditing = false; // Reset flag
+            
+            // Reset UI back to normal
+            document.getElementById('form-title').innerText = "Post a New Property";
+            document.getElementById('save-prop-btn').innerText = "Save Property";
+            document.getElementById('save-prop-btn').style.background = "#27ae60"; // Green button
+            document.getElementById('img-hint').innerText = ""; 
+            document.getElementById('cancel-edit-btn').style.display = "none";
+            
+            clearForm(); // Clear the inputs
+        }
+
+        // --- CLEAR FORM INPUTS ---
+        function clearForm() {
+            document.getElementById('edit-prop-id').value = "";
+            document.getElementById('prop-title').value = ""; 
+            document.getElementById('prop-loc').value = "";
+            document.getElementById('prop-price').value = ""; 
+            document.getElementById('prop-desc').value = "";
+            document.getElementById('prop-contact').value = ""; 
+            document.getElementById('prop-img-file').value = "";
+        }
+
+        // --- DELETE PROPERTY ---
+        async function deleteProperty(id) {
+            if(confirm("Are you sure you want to delete your property?")) {
+                await fetch(`${GATEWAY_URL}/auth/properties/${id}`, { 
+                    method: 'DELETE', 
+                    headers: { 'X-API-KEY': API_KEY, 'Authorization': `Bearer ${authToken}` } 
+                });
+                loadProperties(); // Refresh UI after deleting
+            }
+        }
+
+        // --- LOGOUT USER ---
+        function logout() { 
+            window.location.reload(); // Reloading the page clears all memory and tokens
+        }
+    </script>
+</body>
+</html>
