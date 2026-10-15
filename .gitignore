@@ -1,0 +1,26 @@
+# Compiled class files
+*.class
+
+# Build directories (Maven)
+target/
+*/target/
+
+# Log files
+*.log
+
+# Environment Variables & Secrets (Very Important)
+.env
+*.env
+.env.local
+
+# IDE specific files (VS Code, IntelliJ, Eclipse)
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS generated files
+.DS_Store
+Thumbs.db
