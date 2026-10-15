@@ -8,9 +8,9 @@ This repository fulfills the requirements for the **Service-Oriented Computing**
 ## Student Details
 | Name | Student ID | Role | Key Responsibilities & Endpoints |
 | :--- | :--- | :--- | :--- |
-| **Dulara Tharindu** | ITBNM-2313-0084 | Gateway & Auth Lead / Full Stack | API Gateway, OAuth 2.0 (JWT), Rate Limiting, CORS, Client App, User Auth Service (Endpoints: `/auth/register`, `/auth/login`, `/auth/properties`) |
+| **Dulara Tharindu** | ITBNM-2313-0084 | Sole Developer / Full Stack | Developed the entire system including API Gateway, User Auth & Property Service (`/auth/register`, `/auth/login`, `/auth/properties`), Client App, OAuth 2.0 (JWT), Rate Limiting, CORS, and Docker Orchestration. |
 
-*(Note: As per the current implementation, this repository contains the core infrastructure and the User Auth/Property service managed by the Gateway Lead. Additional group members' services should be listed here as they are integrated.)*
+*(Note: This coursework was completed entirely as an individual effort.)*
 
 ## System Architecture
 The system follows a strict microservices architecture:
@@ -30,7 +30,7 @@ The entire ecosystem is containerized. You can spin up the API Gateway, all micr
 
 1. Clone the repository:
    ```bash
-   git clone <your-repository-url>
+   git clone https://github.com/dularatharinduofficial/PropertyHub-Microservices.git
    cd PropertyHub-Microservices
    ```
 2. Start the system:
@@ -52,7 +52,7 @@ Each microservice includes interactive OpenAPI 3.0 documentation. Once the syste
 * **User Auth Service:** `http://localhost:8081/swagger-ui/index.html` *(Port may vary based on your docker-compose config)*
 
 ## Repository Structure
-```text
+```
 PropertyHub-Microservices/
 ├── api-gateway/            # Spring Cloud Gateway (Routing, CORS, Rate Limiting)
 ├── user-auth-service/      # Spring Boot Auth & Property Service (JWT, MongoDB)
