@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. Redis (Gateway Rate Limiting)
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  # 3. Backend Microservice
+  user-auth-service:
+    build: ./user-auth-service
+    container_name: user-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/authdb
+      - CUSTOM_API_KEY=${CUSTOM_API_KEY}
+    depends_on:
+      - mongodb
+
+  # 4. API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - AUTH_SERVICE_URL=http://user-auth-service:8081
+    depends_on:
+      - redis
+      - user-auth-service
+
+  # 5. Client Application (Frontend)
+  client-app:
+    build: ./client-app
+    container_name: client-app
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongo_data:
